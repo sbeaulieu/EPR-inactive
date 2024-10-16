@@ -13,7 +13,7 @@ library(readr)
 # - 2 sorted sample tables from Michael Meneses with columns added
 # - 1 rock sampling event table from Michael Meneses with columns added
 
-IDsEthanol <- read_excel("C:/Users/sbeaulieu/Downloads/IDs_by_Tube_EthanolPreserved_Chong_Chen_20241009.xlsx")
+IDsEthanol <- read_excel("C:/Users/sbeaulieu/Downloads/IDs_by_Tube_EthanolPreserved_Chong_Chen_20241016.xlsx")
 IDsFormalin <- read_excel("C:/Users/sbeaulieu/Downloads/IDs_by_Tube_FormalinFixed_Chong_Chen_20241009.xlsx", sheet = "Sheet1")
 taxa <- read_excel("C:/Users/sbeaulieu/Downloads/IDs_by_Tube_FormalinFixed_Chong_Chen_20241009.xlsx", sheet = "taxa")
 
@@ -98,6 +98,7 @@ IDs_taxa_sortedEthanol_event <- IDs_taxa_sortedEthanol_event %>%
          minimumDepthInMeters = trunc(depth_meters - 5),
          maximumDepthInMeters = trunc(depth_meters + 5)) # expect vehicle depth to be off by about 5 meters 
 
+IDs_taxa_sortedEthanol_event$identificationRemarks = NA # not needed for ethanol samples
 IDs_taxa_sortedEthanol_event$occurrenceRemarks = NA # not needed for ethanol samples
 IDs_taxa_sortedEthanol_event$geodeticDatum = "WGS84" # confirmed with NDSF WGS84 for Alvin
 IDs_taxa_sortedEthanol_event$coordinateUncertaintyInMeters = 10 # uncertainty in Wu et al. DOI:10.1029/2021GC010213
@@ -121,9 +122,9 @@ IDs_taxa_sortedFormalin_event <- IDs_taxa_sortedFormalin_event %>%
 
 # select the columns for the BCO-DMO to OBIS data product
 IDs_taxa_sortedEthanol_event_select <- IDs_taxa_sortedEthanol_event %>%
-  select(occurrenceID, kingdom, verbatimIdentification, scientificName, scientificNameID, taxonRank, identifiedBy, individualCount, associatedSequences, otherCatalogNumbers, occurrenceStatus, basisOfRecord, verbatimLabel, occurrenceRemarks, eventID, eventDate, locality, decimalLatitude, decimalLongitude, geodeticDatum, coordinateUncertaintyInMeters, minimumDepthInMeters, maximumDepthInMeters, relatedResourceID, samplingProtocol)
+  select(occurrenceID, kingdom, verbatimIdentification, scientificName, scientificNameID, taxonRank, identifiedBy, identificationRemarks, individualCount, associatedSequences, otherCatalogNumbers, occurrenceStatus, basisOfRecord, verbatimLabel, occurrenceRemarks, eventID, eventDate, locality, decimalLatitude, decimalLongitude, geodeticDatum, coordinateUncertaintyInMeters, minimumDepthInMeters, maximumDepthInMeters, relatedResourceID, samplingProtocol)
 IDs_taxa_sortedFormalin_event_select <- IDs_taxa_sortedFormalin_event %>%
-  select(occurrenceID, kingdom, verbatimIdentification, scientificName, scientificNameID, taxonRank, identifiedBy, individualCount, associatedSequences, otherCatalogNumbers, occurrenceStatus, basisOfRecord, verbatimLabel, occurrenceRemarks, eventID, eventDate, locality, decimalLatitude, decimalLongitude, geodeticDatum, coordinateUncertaintyInMeters, minimumDepthInMeters, maximumDepthInMeters, relatedResourceID, samplingProtocol)
+  select(occurrenceID, kingdom, verbatimIdentification, scientificName, scientificNameID, taxonRank, identifiedBy, identificationRemarks, individualCount, associatedSequences, otherCatalogNumbers, occurrenceStatus, basisOfRecord, verbatimLabel, occurrenceRemarks, eventID, eventDate, locality, decimalLatitude, decimalLongitude, geodeticDatum, coordinateUncertaintyInMeters, minimumDepthInMeters, maximumDepthInMeters, relatedResourceID, samplingProtocol)
 
 # combine ethanol + formalin tables after the columns are in the right order
 gastropods_inactive_AT5006_BCODMO <- bind_rows(IDs_taxa_sortedEthanol_event_select, IDs_taxa_sortedFormalin_event_select)
@@ -132,4 +133,4 @@ gastropods_inactive_AT5006_BCODMO <- bind_rows(IDs_taxa_sortedEthanol_event_sele
 # can't use quote = FALSE with write.csv because of the comma in verbatimIdentification
 # use write_csv from the readr package
 # readr::write_csv(gastropods_inactive_AT5006_BCODMO,"C:/Users/sbeaulieu/Downloads/gastropods_inactive_AT50-06_BCO-DMO_20241016.csv")
-
+# confirm that the output csv contains newly added identificationRemarks

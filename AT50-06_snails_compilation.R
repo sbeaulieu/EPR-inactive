@@ -1,10 +1,11 @@
 # script to compile data table for BCO-DMO
 # AT50-06 snail identifications by Chong Chen
 # Stace Beaulieu
-# 2024-10-09
+# 2024-10-16
 
 library(readxl)
 library(dplyr)
+library(readr)
 
 # read in the input data files
 # 5 input data files in Google Drive
@@ -93,21 +94,23 @@ sort(unique(IDs_taxa_sortedFormalin_event$eventID))
 # add columns
 # ethanol
 IDs_taxa_sortedEthanol_event <- IDs_taxa_sortedEthanol_event %>%
-  mutate(occurrenceID = paste(occurrenceID_prefix, occurrenceID_suffix),
+  mutate(occurrenceID = paste(occurrenceID_prefix, occurrenceID_suffix, sep = ""),
          minimumDepthInMeters = trunc(depth_meters - 5),
          maximumDepthInMeters = trunc(depth_meters + 5)) # expect vehicle depth to be off by about 5 meters 
 
 IDs_taxa_sortedEthanol_event$occurrenceRemarks = NA # not needed for ethanol samples
+IDs_taxa_sortedEthanol_event$geodeticDatum = "WGS84" # confirmed with NDSF WGS84 for Alvin
 IDs_taxa_sortedEthanol_event$coordinateUncertaintyInMeters = 10 # uncertainty in Wu et al. DOI:10.1029/2021GC010213
 
 # formalin
 IDs_taxa_sortedFormalin_event <- IDs_taxa_sortedFormalin_event %>%
-  mutate(occurrenceID = paste(occurrenceID_prefix, occurrenceID_suffix),
+  mutate(occurrenceID = paste(occurrenceID_prefix, occurrenceID_suffix, sep = ""),
          minimumDepthInMeters = trunc(depth_meters - 5),
          maximumDepthInMeters = trunc(depth_meters + 5)) # expect vehicle depth to be off by about 5 meters 
 
 IDs_taxa_sortedFormalin_event$associatedSequences = NA # not needed for formalin samples
 IDs_taxa_sortedFormalin_event$occurrenceRemarks = "this species may also have occurred on other rocks collected on this dive"
+IDs_taxa_sortedFormalin_event$geodeticDatum = "WGS84" # confirmed with NDSF WGS84 for Alvin
 # since there's uncertainty for formalin specimens in assigning occurrenceID to eventID
 # add coordinateUncertaintyInMeters 30 m for Luckys Mound 
 # add coordinateUncertaintyInMeters 100 m for Sentry Spire because samples span southern to northern edifice
@@ -118,11 +121,15 @@ IDs_taxa_sortedFormalin_event <- IDs_taxa_sortedFormalin_event %>%
 
 # select the columns for the BCO-DMO to OBIS data product
 IDs_taxa_sortedEthanol_event_select <- IDs_taxa_sortedEthanol_event %>%
-  select(occurrenceID, kingdom, verbatimIdentification, scientificName, scientificNameID, taxonRank, identifiedBy, individualCount, associatedSequences, otherCatalogNumbers, occurrenceStatus, basisOfRecord, verbatimLabel, occurrenceRemarks, eventID, eventDate, locality, decimalLatitude, decimalLongitude, coordinateUncertaintyInMeters, minimumDepthInMeters, maximumDepthInMeters, relatedResourceID, samplingProtocol)
+  select(occurrenceID, kingdom, verbatimIdentification, scientificName, scientificNameID, taxonRank, identifiedBy, individualCount, associatedSequences, otherCatalogNumbers, occurrenceStatus, basisOfRecord, verbatimLabel, occurrenceRemarks, eventID, eventDate, locality, decimalLatitude, decimalLongitude, geodeticDatum, coordinateUncertaintyInMeters, minimumDepthInMeters, maximumDepthInMeters, relatedResourceID, samplingProtocol)
 IDs_taxa_sortedFormalin_event_select <- IDs_taxa_sortedFormalin_event %>%
-  select(occurrenceID, kingdom, verbatimIdentification, scientificName, scientificNameID, taxonRank, identifiedBy, individualCount, associatedSequences, otherCatalogNumbers, occurrenceStatus, basisOfRecord, verbatimLabel, occurrenceRemarks, eventID, eventDate, locality, decimalLatitude, decimalLongitude, coordinateUncertaintyInMeters, minimumDepthInMeters, maximumDepthInMeters, relatedResourceID, samplingProtocol)
+  select(occurrenceID, kingdom, verbatimIdentification, scientificName, scientificNameID, taxonRank, identifiedBy, individualCount, associatedSequences, otherCatalogNumbers, occurrenceStatus, basisOfRecord, verbatimLabel, occurrenceRemarks, eventID, eventDate, locality, decimalLatitude, decimalLongitude, geodeticDatum, coordinateUncertaintyInMeters, minimumDepthInMeters, maximumDepthInMeters, relatedResourceID, samplingProtocol)
 
 # combine ethanol + formalin tables after the columns are in the right order
 gastropods_inactive_AT5006_BCODMO <- bind_rows(IDs_taxa_sortedEthanol_event_select, IDs_taxa_sortedFormalin_event_select)
 
-# write.csv(gastropods_inactive_AT5006_BCODMO,"C:/Users/sbeaulieu/Downloads/gastropods_inactive_AT50-06_BCO-DMO_20241009.csv", row.names=FALSE)
+# write.csv(gastropods_inactive_AT5006_BCODMO,"C:/Users/sbeaulieu/Downloads/gastropods_inactive_AT50-06_BCO-DMO_20241016_quotes.csv", row.names=FALSE)
+# can't use quote = FALSE with write.csv because of the comma in verbatimIdentification
+# use write_csv from the readr package
+# readr::write_csv(gastropods_inactive_AT5006_BCODMO,"C:/Users/sbeaulieu/Downloads/gastropods_inactive_AT50-06_BCO-DMO_20241016.csv")
+

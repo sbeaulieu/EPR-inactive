@@ -134,3 +134,5 @@ gastropods_inactive_AT5006_BCODMO <- bind_rows(IDs_taxa_sortedEthanol_event_sele
 # use write_csv from the readr package
 # readr::write_csv(gastropods_inactive_AT5006_BCODMO,"C:/Users/sbeaulieu/Downloads/gastropods_inactive_AT50-06_BCO-DMO_20241022.csv")
 # confirm that the output csv used revised input IDs Ethanol 
+
+# manually added row for RR2102 see gastropods_inactive_AT50-06_RR2102_BCO-DMO_20241022.xlsx

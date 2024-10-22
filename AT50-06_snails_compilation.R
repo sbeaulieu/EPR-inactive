@@ -1,7 +1,7 @@
 # script to compile data table for BCO-DMO
 # AT50-06 snail identifications by Chong Chen
 # Stace Beaulieu
-# 2024-10-16
+# 2024-10-22
 
 library(readxl)
 library(dplyr)
@@ -13,9 +13,9 @@ library(readr)
 # - 2 sorted sample tables from Michael Meneses with columns added
 # - 1 rock sampling event table from Michael Meneses with columns added
 
-IDsEthanol <- read_excel("C:/Users/sbeaulieu/Downloads/IDs_by_Tube_EthanolPreserved_Chong_Chen_20241016.xlsx")
-IDsFormalin <- read_excel("C:/Users/sbeaulieu/Downloads/IDs_by_Tube_FormalinFixed_Chong_Chen_20241009.xlsx", sheet = "Sheet1")
-taxa <- read_excel("C:/Users/sbeaulieu/Downloads/IDs_by_Tube_FormalinFixed_Chong_Chen_20241009.xlsx", sheet = "taxa")
+IDsEthanol <- read_excel("C:/Users/sbeaulieu/Downloads/IDs_by_Tube_EthanolPreserved_Chong_Chen_20241022.xlsx")
+IDsFormalin <- read_excel("C:/Users/sbeaulieu/Downloads/IDs_by_Tube_FormalinFixed_Chong_Chen_20241022.xlsx", sheet = "Sheet1")
+taxa <- read_excel("C:/Users/sbeaulieu/Downloads/IDs_by_Tube_FormalinFixed_Chong_Chen_20241022.xlsx", sheet = "taxa")
 
 sortedEthanol <- read_excel("C:/Users/sbeaulieu/Downloads/AT50-06 EtOH samples and images data_20241009.xlsx", sheet = "Sample Images Data Sheet")
 sortedFormalin <- read_excel("C:/Users/sbeaulieu/Downloads/AT50-06 Formalin-fixed samples and images data_20241009.xlsx", sheet = "Image Data Sheet")
@@ -132,5 +132,5 @@ gastropods_inactive_AT5006_BCODMO <- bind_rows(IDs_taxa_sortedEthanol_event_sele
 # write.csv(gastropods_inactive_AT5006_BCODMO,"C:/Users/sbeaulieu/Downloads/gastropods_inactive_AT50-06_BCO-DMO_20241016_quotes.csv", row.names=FALSE)
 # can't use quote = FALSE with write.csv because of the comma in verbatimIdentification
 # use write_csv from the readr package
-# readr::write_csv(gastropods_inactive_AT5006_BCODMO,"C:/Users/sbeaulieu/Downloads/gastropods_inactive_AT50-06_BCO-DMO_20241016.csv")
-# confirm that the output csv contains newly added identificationRemarks
+# readr::write_csv(gastropods_inactive_AT5006_BCODMO,"C:/Users/sbeaulieu/Downloads/gastropods_inactive_AT50-06_BCO-DMO_20241022.csv")
+# confirm that the output csv used revised input IDs Ethanol 

@@ -1,11 +1,12 @@
 # script to integrate in-lab with at-sea counts
-# Stace Beaulieu 
-# 2025-07-08
+# Stace Beaulieu, Emmanuelle Bogomolni
+# 2025-07-11
 
 #Load required packages
 
 library(readxl)
 library(dplyr)
+library(ggplot2)
 
 #Set working directory
 
@@ -33,7 +34,9 @@ InLab_AB_numeric <- input_InLab_AB %>%
     )
   )
 )
-
+# also read in sampling events from rock log
+# to be able to add feature and rock type to plots
+input_rock_log <- read.csv("../Documents/QGIS_project_EPR_inactive_AT50-33/sampling_events_from_rock_log_AT50-33_20250709.csv")
 
 #Join in-lab with at-sea counts
 # Join InLab EB and WH on Morphotype column
@@ -54,4 +57,23 @@ subset <- dplyr::select(input_joined_EB_WH_AB, high_taxon_rank, 'revised templat
 subset_grouped_taxon <- subset |>
   group_by(high_taxon_rank) |>
   summarise_at(vars(starts_with(rock_prefix)), sum, na.rm = TRUE) # AB will have NAs
-# need to specify the order for rows
+# need to specify the order for rows here or when plotting
+
+# prototype plot for taxon count totals 1 rock
+subset_grouped_taxon_total <- mutate(subset_grouped_taxon, total = rowSums(across(where(is.numeric))))
+subset_grouped_taxon_total$'Sample.I.D.' <- rock_prefix # to be able to join with rock log
+joined_one_rock <- left_join(subset_grouped_taxon_total, input_rock_log, by = 'Sample.I.D.')
+joined_one_rock |>
+  ggplot(aes(x = high_taxon_rank, y = total, fill = Feature)) +
+  geom_col(position = "dodge") +
+  labs(
+    title = "Taxon Count Totals per Rock by Feature",
+    x = "Taxon", y = "Total Count", fill = "Feature"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top"
+  )
+
+  

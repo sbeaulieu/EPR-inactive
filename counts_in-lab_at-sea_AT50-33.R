@@ -1,6 +1,6 @@
 # script to integrate in-lab with at-sea counts
 # Stace Beaulieu, Emmanuelle Bogomolni
-# 2025-07-11
+# 2025-07-14
 
 #Load required packages
 
@@ -19,7 +19,7 @@ setwd("/Users/sbeaulieu/Downloads")
 # authoritative at-sea sheet
 input_AtSea <-readxl::read_xlsx("macrofauna_AT50-33_At-sea_per_eventID_20250626.xlsx", skip=1)
 # date downloaded in-lab WORKING COPY
-input_InLab_EB <-readxl::read_xlsx("macrofauna_AT50-33_in-lab_Bogomolni_20250708.xlsx", skip=3)
+input_InLab_EB <-readxl::read_xlsx("macrofauna_AT50-33_in-lab_Bogomolni_20250714.xlsx", skip=3)
 input_InLab_WH <-readxl::read_xlsx("macrofauna_AT50-33_in-lab_Hamlin_20250708.xlsx", skip=3)
 # also read in AB's in-lab AT50-33
 # note that AB columns are type chr due to Present and Absent
@@ -50,7 +50,7 @@ input_joined_EB_WH_AB <- dplyr::full_join(input_joined_EB_WH, InLab_AB_numeric, 
 # consider adding top-most rows for Feature and Rock Type
 
 #Select a specific rock to check counts
-rock_prefix <- "AL5288-R01"
+rock_prefix <- "AL5292-R02"
 subset <- dplyr::select(input_joined_EB_WH_AB, high_taxon_rank, 'revised template', Morphotype, starts_with(rock_prefix))
 # write.csv(subset, file = paste(rock_prefix,".csv",sep=""), row.names = FALSE)
 # group by column high_taxon_rank
@@ -76,4 +76,33 @@ joined_one_rock |>
     legend.position = "top"
   )
 
-  
+# repeating to see if we can plot another rock with same structure to data frame
+#Select a specific rock to check counts
+rock_prefix2 <- "AL5294-R02"
+subset2 <- dplyr::select(input_joined_EB_WH_AB, high_taxon_rank, 'revised template', Morphotype, starts_with(rock_prefix2))
+# write.csv(subset, file = paste(rock_prefix,".csv",sep=""), row.names = FALSE)
+# group by column high_taxon_rank
+subset2_grouped_taxon <- subset2 |>
+  group_by(high_taxon_rank) |>
+  summarise_at(vars(starts_with(rock_prefix2)), sum, na.rm = TRUE) # AB will have NAs
+subset2_grouped_taxon_total <- mutate(subset2_grouped_taxon, total = rowSums(across(where(is.numeric))))
+subset2_grouped_taxon_total$'Sample.I.D.' <- rock_prefix2 # to be able to join with rock log
+joined2_one_rock <- left_join(subset2_grouped_taxon_total, input_rock_log, by = 'Sample.I.D.')
+
+# prototype plot for taxon count totals 2 rocks
+# can't row bind until remove the columns specific to rock_prefix
+joined_one_rock_to_bind <- select(joined_one_rock, high_taxon_rank, total, 'Sample.I.D.', Feature, 'Rock.Type')
+joined2_one_rock_to_bind <- select(joined2_one_rock, high_taxon_rank, total, 'Sample.I.D.', Feature, 'Rock.Type')
+two_rocks <- rbind(joined_one_rock_to_bind, joined2_one_rock_to_bind)
+two_rocks |>
+  ggplot(aes(x = high_taxon_rank, y = total, fill = Feature)) +
+  geom_col(position = "dodge") +
+  labs(
+    title = "Taxon Count Totals per Rock by Feature",
+    x = "Taxon", y = "Total Count", fill = "Feature"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top"
+  )

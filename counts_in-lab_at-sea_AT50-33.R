@@ -20,7 +20,7 @@ setwd("/Users/sbeaulieu/Downloads")
 input_AtSea <-readxl::read_xlsx("macrofauna_AT50-33_At-sea_per_eventID_20250626.xlsx", skip=1)
 # date downloaded in-lab WORKING COPY
 input_InLab_EB <-readxl::read_xlsx("macrofauna_AT50-33_in-lab_Bogomolni_20250714.xlsx", skip=3)
-input_InLab_WH <-readxl::read_xlsx("macrofauna_AT50-33_in-lab_Hamlin_20250708.xlsx", skip=3)
+input_InLab_WH <-readxl::read_xlsx("macrofauna_AT50-33_in-lab_Hamlin_20250716.xlsx", skip=3)
 # also read in AB's in-lab AT50-33
 # note that AB columns are type chr due to Present and Absent
 input_InLab_AB <-readxl::read_xlsx("AT50-33_Macrofauna_Counts_Best_20250703.xlsx", skip=9)
@@ -110,7 +110,7 @@ two_rocks |>
 # initialize data frame to row bind multiple rocks grouped taxon total
 multiple_rocks_grouped_taxon_total <- data.frame(matrix(ncol=5,nrow=0, dimnames=list(NULL, c("high_taxon_rank", "total", "Sample.I.D.", "Feature", "Rock.Type"))))
 
-my_list <- list("AL5288-R01", "AL5292-R02", "AL5294-R02")
+my_list <- list("AL5288-R01", "AL5292-R02", "AL5294-R02", "AL5294-R04")
 
 for (rock_prefix in my_list) {
   one_rock <- dplyr::select(input_joined_EB_WH_AB, high_taxon_rank, 'revised template', Morphotype, starts_with(rock_prefix))

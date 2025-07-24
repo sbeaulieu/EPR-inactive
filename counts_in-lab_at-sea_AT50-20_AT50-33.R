@@ -1,7 +1,7 @@
 # script to integrate in-lab with at-sea counts
 # cruises AT50-20 and AT50-33
 # Stace Beaulieu, Emmanuelle Bogomolni
-# 2025-07-22
+# 2025-07-24
 
 #Load required packages
 
@@ -16,15 +16,16 @@ setwd("/Users/sbeaulieu/Downloads")
 #Read in data sheets
 # download from project Google Drive
 # by default readxl reads in the first sheet/tab of the EXCEL file
+# presently requires 7 input files but when these are finalized we can save an 'All_Combined' intermediate file
 
 # authoritative at-sea sheet AT50-33
 input_AtSea <-readxl::read_xlsx("macrofauna_AT50-33_At-sea_per_eventID_20250626.xlsx", skip=1)
 # date downloaded in-lab WORKING COPY
-input_InLab_EB <-readxl::read_xlsx("macrofauna_AT50-33_in-lab_Bogomolni_20250714.xlsx", skip=3)
-input_InLab_WH <-readxl::read_xlsx("macrofauna_AT50-33_in-lab_Hamlin_20250716.xlsx", skip=3)
+input_InLab_EB <-readxl::read_xlsx("macrofauna_AT50-33_in-lab_Bogomolni_20250724.xlsx", skip=3)
+input_InLab_WH <-readxl::read_xlsx("macrofauna_AT50-33_in-lab_Hamlin_20250724.xlsx", skip=3)
 # also read in AB's in-lab AT50-33
 # note that AB columns are type chr due to Present and Absent
-input_InLab_AB <-readxl::read_xlsx("AT50-33_Macrofauna_Counts_Best_20250703.xlsx", skip=9)
+input_InLab_AB <-readxl::read_xlsx("AT50-33_Macrofauna_Counts_Best_20250724.xlsx", skip=9)
 InLab_AB_numeric <- input_InLab_AB %>%
   mutate(
     across(starts_with('AL'),
@@ -37,12 +38,12 @@ InLab_AB_numeric <- input_InLab_AB %>%
 )
 # also read in sampling events from rock log AT50-33
 # to be able to add feature and rock type to plots
-input_rock_log <- read.csv("../Documents/QGIS_project_EPR_inactive_AT50-33/sampling_events_from_rock_log_AT50-33_20250709.csv")
+input_rock_log <- read.csv("sampling_events_from_rock_log_AT50-33_20250709.csv")
 
 #Loading in the AT50-20 datasheets
 # also need to add code and/or read in sheet for rock type 
-Snails_Harris<-readxl::read_xlsx("AT50-20_Macrofauna_Counts_Harris_HARMONIZED_20250722.xlsx", skip = 9)
-Snails_Best<-readxl::read_xlsx("AT50-20_Macrofauna_Counts_Best_20250722.xlsx", skip = 9)
+Snails_Harris<-readxl::read_xlsx("AT50-20_Macrofauna_Counts_Harris_HARMONIZED_20250724.xlsx", skip = 9)
+Snails_Best<-readxl::read_xlsx("AT50-20_Macrofauna_Counts_Best_20250724.xlsx", skip = 9)
 
 #Combining Snails_Best and Snails_Harris using the join function
 #these include at-sea and in-lab
@@ -133,7 +134,7 @@ All_Combined<-full_join(input_joined_EB_WH_AB, Snails_AT5020_numeric, by = c("ca
 # initialize data frame to row bind multiple rocks grouped taxon total
 multiple_rocks_grouped_taxon_total <- data.frame(matrix(ncol=5,nrow=0, dimnames=list(NULL, c("high_taxon_rank", "total", "Sample.I.D.", "Feature", "Rock.Type"))))
 
-my_list <- list("AL5288-R01", "AL5292-R02", "AL5294-R02", "AL5294-R04")
+my_list <- list("AL5288-R01", "AL5288-R02", "AL5292-R02", "AL5292-R03", "AL5294-R02", "AL5294-R04")
 
 for (rock_prefix in my_list) {
   one_rock <- dplyr::select(input_joined_EB_WH_AB, high_taxon_rank, 'revised template', Morphotype, starts_with(rock_prefix))
@@ -148,20 +149,40 @@ for (rock_prefix in my_list) {
   multiple_rocks_grouped_taxon_total <- rbind(multiple_rocks_grouped_taxon_total, joined_one_rock_to_bind)
 }
 
-# plot multiple rocks grouped taxon total
-# so far this only works when rocks are from separate Features
+# plot multiple rocks grouped taxon total counts
+# not colored yet by Rock.Type
 multiple_rocks_grouped_taxon_total |>
-  ggplot(aes(x = high_taxon_rank, y = total, fill = Feature)) +
+  ggplot(aes(x = high_taxon_rank, y = total, fill = Sample.I.D.)) +
   geom_col(position = "dodge") +
   labs(
-    title = "Taxon Count Totals per Rock by Feature",
-    x = "Taxon", y = "Total Count", fill = "Feature"
+    title = "Taxon Count Totals per Rock",
+    x = "Taxon", y = "Total Count", fill = "Sample.I.D."
   ) +
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "top"
   )
+
+# plot multiple rocks grouped taxon total relative abundance
+# need to confirm this is working for multiple rocks from same Feature
+#Graphing by taxa group and coloring by feature
+multiple_rocks_grouped_taxon_total |>
+  group_by(Feature) |>
+  mutate(relative_abundance = total / sum(total)) |>
+  ungroup() |>
+  ggplot(aes(x = reorder(high_taxon_rank, -relative_abundance), y = relative_abundance, fill = Feature)) +
+  geom_col(position = "dodge") +
+  labs(
+    title = "Relative Abundance by Feature",
+    x = "Taxon", y = "Relative Abundance", fill = "Feature"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top"
+  )
+
 
 # next block of code ultimately for NMDS 
 # select multiple rocks ultimately for NMDS from both cruises

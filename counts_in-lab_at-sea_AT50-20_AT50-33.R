@@ -1,7 +1,7 @@
 # script to integrate in-lab with at-sea counts
 # cruises AT50-20 and AT50-33
 # Stace Beaulieu, Emmanuelle Bogomolni
-# 2025-07-24
+# 2025-07-25
 
 #Load required packages
 
@@ -36,15 +36,31 @@ InLab_AB_numeric <- input_InLab_AB %>%
     )
   )
 )
-# also read in sampling events from rock log AT50-33
-# to be able to add feature and rock type to plots
-input_rock_log <- read.csv("sampling_events_from_rock_log_AT50-33_20250709.csv")
 
 #Loading in the AT50-20 datasheets
-# also need to add code and/or read in sheet for rock type 
 Snails_Harris<-readxl::read_xlsx("AT50-20_Macrofauna_Counts_Harris_HARMONIZED_20250724.xlsx", skip = 9)
 Snails_Best<-readxl::read_xlsx("AT50-20_Macrofauna_Counts_Best_20250724.xlsx", skip = 9)
 
+# also read in sampling events from rock log AT50-33
+# 2025-07-25 manually added 2 rock samples from AT50-20
+# spatiotemporal metadata from AT5020RockArchiveMetadata4IGSNFinal_20250115.xlsx
+# rock type color from Mullineaux et al. 2025 DOI:10.1016/j.dsr.2025.104475
+# to be able to add feature and rock type to plots
+input_rock_log <- read.csv("sampling_events_from_rock_log_AT50-20_AT50-33_20250725.csv")
+
+
+#Join data sheets
+
+#AT50-33 Join in-lab with at-sea counts
+# Join InLab EB and WH on Morphotype column
+input_joined_EB <- dplyr::full_join(input_AtSea, input_InLab_EB, c("Morphotype" = "Morphotype_AT50-33_At-sea_20250626"))
+# note that EB and WH sheets also include category_in_Ayinde_Best_template 
+# note that EB and WH sheets also include high_taxon_rank 
+input_joined_EB_WH <- dplyr::full_join(input_joined_EB, input_InLab_WH, c("Morphotype" = "Morphotype_AT50-33_At-sea_20250626", "category_in_Ayinde_Best_template" = "category_in_Ayinde_Best_template", "high_taxon_rank" = "high_taxon_rank"))
+# Join InLab AB on category AB (= Morphotype DSR) column
+input_joined_EB_WH_AB <- dplyr::full_join(input_joined_EB_WH, InLab_AB_numeric, c("category_in_Ayinde_Best_template" = "Morphotype DSR"))
+
+#AT50-20 Join counts
 #Combining Snails_Best and Snails_Harris using the join function
 #these include at-sea and in-lab
 Snails_AT5020<-full_join(Snails_Best, Snails_Harris, by="...2")
@@ -60,17 +76,10 @@ Snails_AT5020_numeric <- Snails_AT5020 %>%
     )
   )
 
-#AT50-33 Join in-lab with at-sea counts
-# Join InLab EB and WH on Morphotype column
-input_joined_EB <- dplyr::full_join(input_AtSea, input_InLab_EB, c("Morphotype" = "Morphotype_AT50-33_At-sea_20250626"))
-# note that EB and WH sheets also include category_in_Ayinde_Best_template 
-# note that EB and WH sheets also include high_taxon_rank 
-input_joined_EB_WH <- dplyr::full_join(input_joined_EB, input_InLab_WH, c("Morphotype" = "Morphotype_AT50-33_At-sea_20250626", "category_in_Ayinde_Best_template" = "category_in_Ayinde_Best_template", "high_taxon_rank" = "high_taxon_rank"))
-# Join InLab AB on category AB (= Morphotype DSR) column
-input_joined_EB_WH_AB <- dplyr::full_join(input_joined_EB_WH, InLab_AB_numeric, c("category_in_Ayinde_Best_template" = "Morphotype DSR"))
+# join AT50-20 with AT50-33 counts
+All_Combined_wide<-full_join(input_joined_EB_WH_AB, Snails_AT5020_numeric, by = c("category_in_Ayinde_Best_template" ="...2" ))
+# note this has a bunch of extra columns
 
-# join AT50-20 with AT50-33
-All_Combined<-full_join(input_joined_EB_WH_AB, Snails_AT5020_numeric, by = c("category_in_Ayinde_Best_template" ="...2" ))
 
 # #Select a specific rock to check counts
 # rock_prefix <- "AL5292-R02"
@@ -134,10 +143,10 @@ All_Combined<-full_join(input_joined_EB_WH_AB, Snails_AT5020_numeric, by = c("ca
 # initialize data frame to row bind multiple rocks grouped taxon total
 multiple_rocks_grouped_taxon_total <- data.frame(matrix(ncol=5,nrow=0, dimnames=list(NULL, c("high_taxon_rank", "total", "Sample.I.D.", "Feature", "Rock.Type"))))
 
-my_list <- list("AL5288-R01", "AL5288-R02", "AL5292-R02", "AL5292-R03", "AL5294-R02", "AL5294-R04")
+my_list <- list("AL5224-LM-R01", "AL5288-R01", "AL5288-R02", "AL5292-R02", "AL5292-R03", "AL5294-R02", "AL5294-R04")
 
 for (rock_prefix in my_list) {
-  one_rock <- dplyr::select(input_joined_EB_WH_AB, high_taxon_rank, 'revised template', Morphotype, starts_with(rock_prefix))
+  one_rock <- dplyr::select(All_Combined_wide, high_taxon_rank, 'revised template', Morphotype, starts_with(rock_prefix))
   # group by column high_taxon_rank then sum for total per rock
   one_rock_grouped_taxon <- one_rock |>
     group_by(high_taxon_rank) |>
@@ -187,11 +196,11 @@ multiple_rocks_grouped_taxon_total |>
 # next block of code ultimately for NMDS 
 # select multiple rocks ultimately for NMDS from both cruises
 rocks_for_nmds <- c("AL5222-SS-R03", "AL5224-LM-R01", "AL5292-R03", "AL5294-R02")
-multiple_rocks_per_event <- dplyr::select(All_Combined, high_taxon_rank, 'revised template', Morphotype, category_in_Ayinde_Best_template, starts_with(rocks_for_nmds))
+multiple_rocks_per_event <- dplyr::select(All_Combined_wide, high_taxon_rank, 'revised template', Morphotype, category_in_Ayinde_Best_template, starts_with(rocks_for_nmds))
 
 # initialize data frame to column bind multiple rocks total
 #multiple_rocks_total <- data.frame(matrix(ncol=0,nrow=56))
-multiple_rocks_total <- select(All_Combined, high_taxon_rank, 'revised template', Morphotype, category_in_Ayinde_Best_template)
+multiple_rocks_total <- select(All_Combined_wide, high_taxon_rank, 'revised template', Morphotype, category_in_Ayinde_Best_template)
 
 for (rock_prefix in rocks_for_nmds) {
   one_rock_total <- multiple_rocks_per_event |>

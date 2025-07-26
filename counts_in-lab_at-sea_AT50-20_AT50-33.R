@@ -1,13 +1,17 @@
 # script to integrate in-lab with at-sea counts
+# plus plot grouped taxon counts and relative abundance
+# plus NMDS
 # cruises AT50-20 and AT50-33
 # Stace Beaulieu, Emmanuelle Bogomolni
-# 2025-07-25
+# 2025-07-26
 
 #Load required packages
 
 library(readxl)
 library(dplyr)
 library(ggplot2)
+library(data.table) # for transpose function
+library(vegan)
 
 #Set working directory
 
@@ -210,6 +214,30 @@ for (rock_prefix in rocks_for_nmds) {
     select(rock_prefix)
   multiple_rocks_total <- cbind(multiple_rocks_total, one_rock_total)
 }
-
 # write.csv(multiple_rocks_total, file = "multiple_rocks_total_wide.csv", row.names = FALSE)
 
+# from multiple_rocks_total remove rows not fully assessed across all samples, remove extra columns, then transpose for vegan
+multiple_rocks_for_nmds <- multiple_rocks_total |>
+  filter(category_in_Ayinde_Best_template != "NA") |>
+  filter(Morphotype != "copepod unk") |>
+  filter(Morphotype != "cauliflower protist")
+# check how many counts lost
+# counts_lost <- multiple_rocks_total |>
+#   filter(category_in_Ayinde_Best_template == "NA")
+multiple_rocks_for_nmds <- multiple_rocks_for_nmds |>
+  select(-high_taxon_rank, -`revised template`, -category_in_Ayinde_Best_template)
+t_multiple_rocks_for_nmds <- transpose(multiple_rocks_for_nmds)
+rownames(t_multiple_rocks_for_nmds) <- colnames(multiple_rocks_for_nmds)
+colnames(t_multiple_rocks_for_nmds) <- t_multiple_rocks_for_nmds[1,]
+t_multiple_rocks_for_nmds <- t_multiple_rocks_for_nmds[-1, ]
+
+# data for vegan NMDS -----------------
+data_for_vegan <- as.data.frame(sapply(t_multiple_rocks_for_nmds, as.numeric))
+rownames(data_for_vegan) <- rownames(t_multiple_rocks_for_nmds)
+# if any NA values confirm fill with zero
+data_for_vegan[is.na(data_for_vegan)] <- 0
+
+#not sure if this is set up correctly yet for NMDS using relative abundance
+set.seed(50) #arbitrary value for random number generator
+data_nmds <- metaMDS(data_for_vegan, distance = "bray", autotransform = FALSE, k=2, trymax=100)
+plot(data_nmds, type="t")

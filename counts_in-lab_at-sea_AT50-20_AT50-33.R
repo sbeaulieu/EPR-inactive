@@ -3,7 +3,7 @@
 # plus NMDS
 # cruises AT50-20 and AT50-33
 # Stace Beaulieu, Emmanuelle Bogomolni
-# 2025-07-26
+# 2025-07-30
 
 #Load required packages
 
@@ -12,6 +12,7 @@ library(dplyr)
 library(ggplot2)
 library(data.table) # for transpose function
 library(vegan)
+library(scales) # for NMDS ggplot
 
 #Set working directory
 
@@ -25,7 +26,7 @@ setwd("/Users/sbeaulieu/Downloads")
 # authoritative at-sea sheet AT50-33
 input_AtSea <-readxl::read_xlsx("macrofauna_AT50-33_At-sea_per_eventID_20250626.xlsx", skip=1)
 # date downloaded in-lab WORKING COPY
-input_InLab_EB <-readxl::read_xlsx("macrofauna_AT50-33_in-lab_Bogomolni_20250724.xlsx", skip=3)
+input_InLab_EB <-readxl::read_xlsx("macrofauna_AT50-33_in-lab_Bogomolni_20250730.xlsx", skip=3)
 input_InLab_WH <-readxl::read_xlsx("macrofauna_AT50-33_in-lab_Hamlin_20250724.xlsx", skip=3)
 # also read in AB's in-lab AT50-33
 # note that AB columns are type chr due to Present and Absent
@@ -83,6 +84,7 @@ Snails_AT5020_numeric <- Snails_AT5020 %>%
 # join AT50-20 with AT50-33 counts
 All_Combined_wide<-full_join(input_joined_EB_WH_AB, Snails_AT5020_numeric, by = c("category_in_Ayinde_Best_template" ="...2" ))
 # note this has a bunch of extra columns
+# write.csv(All_Combined_wide, file = "All_Combined_wide_20250730.csv", row.names = FALSE)
 
 
 # #Select a specific rock to check counts
@@ -241,3 +243,42 @@ data_for_vegan[is.na(data_for_vegan)] <- 0
 set.seed(50) #arbitrary value for random number generator
 data_nmds <- metaMDS(data_for_vegan, distance = "bray", autotransform = FALSE, k=2, trymax=100)
 plot(data_nmds, type="t")
+
+# plot with ggplot
+# Set figure base size
+figures_base_size <- 7
+
+# make a dataframe with the nmds points and rock identifier
+nmds_plot_data <- data.frame(
+  NMDS1 = data_nmds$points[, 1],
+  NMDS2 = data_nmds$points[, 2],
+  rock_id = rownames(data_nmds$points))
+
+#join input rock log with nmds data
+nmds_plot_data <- nmds_plot_data |>
+  left_join(input_rock_log, by = c("rock_id" = "Sample.I.D."))
+
+# Plot
+ggplot(nmds_plot_data, aes(x = NMDS1, y = NMDS2)) +
+  geom_point(aes(shape = Feature, color = Rock.Type), size = 4, stroke=1) +
+  coord_fixed()+
+#  scale_shape_manual(values = c(16, 17, 5, 8, 6, 3, 15)) +
+  scale_shape_manual(values = c(16, 17, 5, 8)) +
+  scale_color_manual(values = c(
+    "yellow" = "#F39C12",
+    "rusty" = "#A93226",
+    "green" = "green4"
+  )) +
+  theme_bw(base_size = figures_base_size) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  theme(panel.border = element_rect(fill=NA, colour="black", size = 1)) +
+  theme(axis.text = element_text(colour="black", size = 12),
+        axis.title = element_text(colour="black", size = 14))+
+  guides(color = guide_legend(override.aes = list(shape = 15, size = 4))) +
+  scale_x_continuous(labels = label_number(accuracy = 0.1), limits = c(-2.4, 2.4)) +  # 1 decimal place
+  scale_y_continuous(labels = label_number(accuracy = 0.1), limits = c(-2.4, 2.4))+
+  labs(
+    color = "Rock Type",
+    shape = "Feature"
+  )
+

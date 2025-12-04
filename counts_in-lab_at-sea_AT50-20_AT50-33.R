@@ -1,14 +1,16 @@
 # script to integrate in-lab with at-sea counts
+# plus taxonomist refined morphospecies
 # plus plot grouped taxon counts and relative abundance
 # plus NMDS
 # cruises AT50-20 and AT50-33
 # Stace Beaulieu, Emmanuelle Bogomolni
-# 2025-07-30
+# 2025-12-04
 
 #Load required packages
 
 library(readxl)
 library(dplyr)
+library(tidyr) # for pivot
 library(ggplot2)
 library(data.table) # for transpose function
 library(vegan)
@@ -86,6 +88,46 @@ All_Combined_wide<-full_join(input_joined_EB_WH_AB, Snails_AT5020_numeric, by = 
 # note this has a bunch of extra columns
 # write.csv(All_Combined_wide, file = "All_Combined_wide_20250730.csv", row.names = FALSE)
 
+# plus taxonomist refined morphospecies
+
+#Read in data sheet
+# download from project Google Drive
+input_taxonomist <-readxl::read_xlsx("macrofauna_inactive_identified_Weston_Hourdez_prototype_Frutos_20251124_edited.xlsx")
+# edited occurrenceID to include "at-sea"
+# start with expected previousIdentifications
+# but note that an initial id may have been incorrect
+
+#Subset to Morphotype that has been refined to morphospecies
+taxonomist_amphipod <- input_taxonomist %>%
+  filter(previousIdentifications == "amphipod") %>%
+  select(occurrenceID, verbatimIdentification, individualCount)
+# need wide format to add to All_Combined sheet
+# for concept between eventID and occurrenceID exclude everything after suffix at-sea
+taxonomist_amphipod$occureventID <- sub("(sea).*", "\\1", taxonomist_amphipod$occurrenceID)
+
+# convert to wide format to join with All_Combined_wide from above
+taxonomist_amphipod_wide <- taxonomist_amphipod %>%
+  select(-occurrenceID) %>%
+  pivot_wider(
+    names_from = occureventID, 
+    values_from = individualCount,
+    values_fn = sum, # multiple observations that need to be aggregated
+    values_fill = 0)
+
+# but need previousIdentifications == "amphipod"
+# actually need this to match to Morphotype == "amphipod unk"
+taxonomist_amphipod_wide$Morphotype = "amphipod unk"
+test <- full_join(All_Combined_wide, taxonomist_amphipod_wide)
+# new rows added to bottom and additional eventID added to far right
+test_amphipod <- test %>%
+  filter(Morphotype == "amphipod unk") %>%
+  select(Morphotype, verbatimIdentification, starts_with("AL"))
+# write.csv(test_amphipod, file = "test_amphipod_at-sea_only_20251204.csv", row.names = FALSE)
+# next will need to remove Morphotype count now that it is refined into morphospecies count(s)
+
+
+# plus plot grouped taxon counts and relative abundance
+# plus NMDS
 
 # #Select a specific rock to check counts
 # rock_prefix <- "AL5292-R02"

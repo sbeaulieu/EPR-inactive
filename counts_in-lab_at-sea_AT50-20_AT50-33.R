@@ -4,13 +4,14 @@
 # plus NMDS
 # cruises AT50-20 and AT50-33
 # Stace Beaulieu, Emmanuelle Bogomolni
-# 2025-12-04
+# 2025-12-05
 
 #Load required packages
 
 library(readxl)
 library(dplyr)
 library(tidyr) # for pivot
+library(stringr) # for str_replace
 library(ggplot2)
 library(data.table) # for transpose function
 library(vegan)
@@ -92,7 +93,7 @@ All_Combined_wide<-full_join(input_joined_EB_WH_AB, Snails_AT5020_numeric, by = 
 
 #Read in data sheet
 # download from project Google Drive
-input_taxonomist <-readxl::read_xlsx("macrofauna_inactive_identified_Weston_Hourdez_prototype_Frutos_20251124_edited.xlsx")
+input_taxonomist <-readxl::read_xlsx("macrofauna_inactive_identified_Weston_Hourdez_Frutos_20251205_1500.xlsx")
 # edited occurrenceID to include "at-sea"
 # start with expected previousIdentifications
 # but note that an initial id may have been incorrect
@@ -101,9 +102,22 @@ input_taxonomist <-readxl::read_xlsx("macrofauna_inactive_identified_Weston_Hour
 taxonomist_amphipod <- input_taxonomist %>%
   filter(previousIdentifications == "amphipod") %>%
   select(occurrenceID, verbatimIdentification, individualCount)
-# need wide format to add to All_Combined sheet
-# for concept between eventID and occurrenceID exclude everything after suffix at-sea
-taxonomist_amphipod$occureventID <- sub("(sea).*", "\\1", taxonomist_amphipod$occurrenceID)
+
+# for concept between eventID and occurrenceID 
+# exclude everything after suffix at-sea
+# exclude after slurp_in-lab
+# exclude after rock-wash_in-lab
+# exclude the hyphenated counter after in-lab bulk sample number
+
+taxonomist_amphipod <- taxonomist_amphipod %>%
+  mutate(occureventID =
+           occurrenceID |>
+           str_replace("(sea).*", "\\1") |>
+           str_replace("(slurp_in-lab).*", "\\1") |>
+           str_replace("(rock-wash_in-lab).*", "\\1") |>
+           str_replace("(.*lab_\\d{3}).*$", "\\1")
+  )
+           
 
 # convert to wide format to join with All_Combined_wide from above
 taxonomist_amphipod_wide <- taxonomist_amphipod %>%
@@ -114,16 +128,24 @@ taxonomist_amphipod_wide <- taxonomist_amphipod %>%
     values_fn = sum, # multiple observations that need to be aggregated
     values_fill = 0)
 
-# but need previousIdentifications == "amphipod"
-# actually need this to match to Morphotype == "amphipod unk"
+# but need previousIdentifications "amphipod"
+# actually need this to match to Morphotype == "amphipod unk" in All_Combined_wide
 taxonomist_amphipod_wide$Morphotype = "amphipod unk"
 test <- full_join(All_Combined_wide, taxonomist_amphipod_wide)
 # new rows added to bottom and additional eventID added to far right
 test_amphipod <- test %>%
   filter(Morphotype == "amphipod unk") %>%
   select(Morphotype, verbatimIdentification, starts_with("AL"))
-# write.csv(test_amphipod, file = "test_amphipod_at-sea_only_20251204.csv", row.names = FALSE)
+# still need to match eventIDs in Johanna's sheet
+# for the 2 fully counted samples from AT50-20
+# AL5222-SS-R03 and AL5224-LM-R01
+# likely should change column headers in All_Combined_wide 
+# to aid the join to taxonomist identified sheet
+# it might just be AL5222-SS-R03_slurp_at-sea and AL5224-LM-R01_slurp_at-sea
+
+# write.csv(test_amphipod, file = "test_amphipod_at-sea_in-lab_20251205.csv", row.names = FALSE)
 # next will need to remove Morphotype count now that it is refined into morphospecies count(s)
+
 
 
 # plus plot grouped taxon counts and relative abundance

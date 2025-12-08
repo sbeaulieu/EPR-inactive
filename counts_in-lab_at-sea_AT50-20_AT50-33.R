@@ -4,7 +4,7 @@
 # plus NMDS
 # cruises AT50-20 and AT50-33
 # Stace Beaulieu, Emmanuelle Bogomolni
-# 2025-12-05
+# 2025-12-08
 
 #Load required packages
 
@@ -24,13 +24,14 @@ setwd("/Users/sbeaulieu/Downloads")
 #Read in data sheets
 # download from project Google Drive
 # by default readxl reads in the first sheet/tab of the EXCEL file
-# presently requires 7 input files but when these are finalized we can save an 'All_Combined' intermediate file
+# presently requires 7 input files for All_Combined_wide
+# but when these are finalized we can save an 'All_Combined' intermediate file
 
 # authoritative at-sea sheet AT50-33
 input_AtSea <-readxl::read_xlsx("macrofauna_AT50-33_At-sea_per_eventID_20250626.xlsx", skip=1)
 # date downloaded in-lab WORKING COPY
-input_InLab_EB <-readxl::read_xlsx("macrofauna_AT50-33_in-lab_Bogomolni_20250730.xlsx", skip=3)
-input_InLab_WH <-readxl::read_xlsx("macrofauna_AT50-33_in-lab_Hamlin_20250724.xlsx", skip=3)
+input_InLab_EB <-readxl::read_xlsx("macrofauna_AT50-33_in-lab_Bogomolni_20251208.xlsx", skip=3)
+input_InLab_WH <-readxl::read_xlsx("macrofauna_AT50-33_in-lab_Hamlin_20251208.xlsx", skip=3)
 # also read in AB's in-lab AT50-33
 # note that AB columns are type chr due to Present and Absent
 input_InLab_AB <-readxl::read_xlsx("AT50-33_Macrofauna_Counts_Best_20250724.xlsx", skip=9)
@@ -47,7 +48,7 @@ InLab_AB_numeric <- input_InLab_AB %>%
 
 #Loading in the AT50-20 datasheets
 Snails_Harris<-readxl::read_xlsx("AT50-20_Macrofauna_Counts_Harris_HARMONIZED_20250724.xlsx", skip = 9)
-Snails_Best<-readxl::read_xlsx("AT50-20_Macrofauna_Counts_Best_20250724.xlsx", skip = 9)
+Snails_Best<-readxl::read_xlsx("AT50-20_Macrofauna_Counts_Best_20251208.xlsx", skip = 9)
 
 # also read in sampling events from rock log AT50-33
 # 2025-07-25 manually added 2 rock samples from AT50-20
@@ -87,7 +88,8 @@ Snails_AT5020_numeric <- Snails_AT5020 %>%
 # join AT50-20 with AT50-33 counts
 All_Combined_wide<-full_join(input_joined_EB_WH_AB, Snails_AT5020_numeric, by = c("category_in_Ayinde_Best_template" ="...2" ))
 # note this has a bunch of extra columns
-# write.csv(All_Combined_wide, file = "All_Combined_wide_20250730.csv", row.names = FALSE)
+# write.csv(All_Combined_wide, file = "All_Combined_wide_20251208.csv", row.names = FALSE)
+# note to consider removing quotes from output csv quote=FALSE
 
 # plus taxonomist refined morphospecies
 

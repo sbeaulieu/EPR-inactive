@@ -4,7 +4,7 @@
 # plus NMDS
 # cruises AT50-20 and AT50-33
 # Stace Beaulieu, Emmanuelle Bogomolni
-# 2025-12-08
+# 2025-12-16
 
 #Load required packages
 
@@ -34,7 +34,7 @@ input_InLab_EB <-readxl::read_xlsx("macrofauna_AT50-33_in-lab_Bogomolni_20251208
 input_InLab_WH <-readxl::read_xlsx("macrofauna_AT50-33_in-lab_Hamlin_20251208.xlsx", skip=3)
 # also read in AB's in-lab AT50-33
 # note that AB columns are type chr due to Present and Absent
-input_InLab_AB <-readxl::read_xlsx("AT50-33_Macrofauna_Counts_Best_20250724.xlsx", skip=9)
+input_InLab_AB <-readxl::read_xlsx("AT50-33_Macrofauna_Counts_Best_20251216.xlsx", skip=9)
 InLab_AB_numeric <- input_InLab_AB %>%
   mutate(
     across(starts_with('AL'),
@@ -68,6 +68,7 @@ input_joined_EB <- dplyr::full_join(input_AtSea, input_InLab_EB, c("Morphotype" 
 input_joined_EB_WH <- dplyr::full_join(input_joined_EB, input_InLab_WH, c("Morphotype" = "Morphotype_AT50-33_At-sea_20250626", "category_in_Ayinde_Best_template" = "category_in_Ayinde_Best_template", "high_taxon_rank" = "high_taxon_rank"))
 # Join InLab AB on category AB (= Morphotype DSR) column
 input_joined_EB_WH_AB <- dplyr::full_join(input_joined_EB_WH, InLab_AB_numeric, c("category_in_Ayinde_Best_template" = "Morphotype DSR"))
+# 2025-12-16 new category cumacean is last row
 
 #AT50-20 Join counts
 #Combining Snails_Best and Snails_Harris using the join function
@@ -88,15 +89,14 @@ Snails_AT5020_numeric <- Snails_AT5020 %>%
 # join AT50-20 with AT50-33 counts
 All_Combined_wide<-full_join(input_joined_EB_WH_AB, Snails_AT5020_numeric, by = c("category_in_Ayinde_Best_template" ="...2" ))
 # note this has a bunch of extra columns
-# write.csv(All_Combined_wide, file = "All_Combined_wide_20251208.csv", row.names = FALSE)
-# note to consider removing quotes from output csv quote=FALSE
+# write.csv(All_Combined_wide, file = "macrofauna_AT50-20_AT50-33_All_Combined_wide_20251216.csv", row.names = FALSE, quote=FALSE)
 
 # plus taxonomist refined morphospecies
 
 #Read in data sheet
 # download from project Google Drive
-input_taxonomist <-readxl::read_xlsx("macrofauna_inactive_identified_Weston_Hourdez_Frutos_20251205_1500.xlsx")
-# edited occurrenceID to include "at-sea"
+input_taxonomist <-readxl::read_xlsx("macrofauna_inactive_identified_Weston_Hourdez_Frutos_20251216_1549.xlsx")
+
 # start with expected previousIdentifications
 # but note that an initial id may have been incorrect
 
@@ -134,19 +134,18 @@ taxonomist_amphipod_wide <- taxonomist_amphipod %>%
 # actually need this to match to Morphotype == "amphipod unk" in All_Combined_wide
 taxonomist_amphipod_wide$Morphotype = "amphipod unk"
 test <- full_join(All_Combined_wide, taxonomist_amphipod_wide)
-# new rows added to bottom and additional eventID added to far right
+# new rows added to bottom and 
+# additional eventID from not fully sorted AT50-20 added to far right
 test_amphipod <- test %>%
   filter(Morphotype == "amphipod unk") %>%
   select(Morphotype, verbatimIdentification, starts_with("AL"))
-# still need to match eventIDs in Johanna's sheet
-# for the 2 fully counted samples from AT50-20
-# AL5222-SS-R03 and AL5224-LM-R01
-# likely should change column headers in All_Combined_wide 
-# to aid the join to taxonomist identified sheet
-# it might just be AL5222-SS-R03_slurp_at-sea and AL5224-LM-R01_slurp_at-sea
 
-# write.csv(test_amphipod, file = "test_amphipod_at-sea_in-lab_20251205.csv", row.names = FALSE)
-# next will need to remove Morphotype count now that it is refined into morphospecies count(s)
+# verbatimIdentification for the amphipods includes comma
+# add quotes to just this column for csv output
+# Manually add double quotes to the 'name' column
+test_amphipod$verbatimIdentification <- paste0("\"", test_amphipod$verbatimIdentification, "\"")
+# write.csv(test_amphipod, file = "test_amphipod_at-sea_in-lab_20251216_1554.csv", row.names = FALSE, quote=FALSE)
+# next will need to subtract from Morphotype count now that it is refined into morphospecies count(s)
 
 
 

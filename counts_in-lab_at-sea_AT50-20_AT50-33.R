@@ -202,15 +202,40 @@ temp_df <- dplyr::tribble(
 temp_df$verbatimIdentification <- paste0("\"", temp_df$verbatimIdentification, "\"")
 
 test_amphipod <- full_join(temp_df, test_amphipod)
-# exclude AT50-20 not fully sorted
+# exclude columns AT50-20 not fully sorted
 test_amphipod <- test_amphipod %>%
   select(-starts_with("AL5223"),
          -starts_with("AL5222-SS-R02"),
          -starts_with("AL5224-LM-R02"),
          -starts_with("AL5224-LM-R03"))
-
-# write.csv(test_amphipod, file = "test_amphipod_at-sea_in-lab_20251219.csv", row.names = FALSE, quote=FALSE)
+# confirm ok to exclude rows that only had counts for AT50-20 not fully sorted
+target_ids <- c('"Oedicerina sp. Stephensen, 1931"',
+                '"Oedicerina sp."',
+                '"Amphipoda"')
+test_amphipod_exclude <- test_amphipod %>%
+  filter(verbatimIdentification %in% target_ids)
+total_test_amphipod_exclude <- test_amphipod_exclude %>% 
+  select(starts_with("AL")) %>%
+  sum(na.rm = TRUE) # confirmed zero
+test_amphipod <- test_amphipod %>%
+  filter(!str_detect(verbatimIdentification, '"Oedicerina sp. Stephensen, 1931"|"Oedicerina sp."|"Amphipoda"'))
+# last row is morphotype count for amphipod unk
 # next will need to subtract from Morphotype count now that it is refined into morphospecies count(s)
+# initialize new row ultimately column bind so be careful of order
+test_amphipod[nrow(test_amphipod) + 1, ] <- NA
+test_amphipod[10, 1] <- '"amphipod unk"'
+test_amphipod[10, 2] <- 5.01
+# exclude first 3 columns to be able to do the subtraction
+for_subtraction <- test_amphipod %>%
+  select(-verbatimIdentification, -'revised template', -Morphotype)
+for_subtraction[10, ] <- for_subtraction[9, ] - colSums(for_subtraction[1:8, ], na.rm = TRUE)
+for_col_bind <- test_amphipod %>%
+  select(verbatimIdentification, 'revised template', Morphotype)
+# now test_amphipod will contain the values for amphipod unk that
+# ultimately will replace the row in All_combined_wide
+# but still need to remove the old row and do QC totals
+test_amphipod_subtracted <- bind_cols(for_col_bind, for_subtraction)
+# write.csv(test_amphipod_subtracted, file = "test_amphipod_subtracted_20251219.csv", row.names = FALSE, quote=FALSE)
 
 
 # plus plot grouped taxon counts and relative abundance

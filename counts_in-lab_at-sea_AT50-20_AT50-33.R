@@ -69,9 +69,11 @@ input_joined_EB_WH <- dplyr::full_join(input_joined_EB, input_InLab_WH, c("Morph
 # Join InLab AB on category AB (= Morphotype DSR) column
 input_joined_EB_WH_AB <- dplyr::full_join(input_joined_EB_WH, InLab_AB_numeric, c("category_in_Ayinde_Best_template" = "Morphotype DSR"))
 # 2025-12-16 new category cumacean is last row
-# temporarily declare Morphotype and revised template order here in code
+# temporarily declare Morphotype and 'revised template' order here in code
 # because not in harmonization template yet
-
+input_joined_EB_WH_AB$category_in_Ayinde_Best_template == "Cumacean" -> idx
+input_joined_EB_WH_AB$'revised template'[idx] <- 5.015
+input_joined_EB_WH_AB$Morphotype[idx] <- "cumacean"
 
 #AT50-20 Join counts
 #Combining Snails_Best and Snails_Harris using the join function
@@ -98,16 +100,12 @@ All_Combined_wide_clean <- All_Combined_wide %>%
          -starts_with("category"), # couple commas in column category_in_Ayinde_Best_template
          -starts_with("..."))
 # at this point not entirely clean still has character columns separating joins
-# just need to declare the "revised template" column as character
-# to be able to sum the whole table
-All_Combined_wide_clean$`revised template` <- as.character(All_Combined_wide_clean$`revised template`)
 
+# QC output table total with expected total from inputs
 total_All_Combined_wide_clean <- All_Combined_wide_clean %>%
-  select(where(is.numeric)) %>%
+  select(starts_with("AL")) %>%
   sum(na.rm = TRUE)
-#  summarise(across(where(is.numeric), ~ sum(.x, na.rm = TRUE))) # sum per column
 
-# QC expected total counts
 total_input_AtSea <- input_AtSea %>%
   select(starts_with("AL")) %>%
   sum(na.rm = TRUE)
@@ -130,7 +128,7 @@ expected <- total_input_AtSea +
   total_Snails_AT5020_numeric
 
 
-# write.csv(All_Combined_wide_clean, file = "macrofauna_AT50-20_AT50-33_All_Combined_wide_20251219.csv", row.names = FALSE, quote=FALSE)
+# write.csv(All_Combined_wide_clean, file = "macrofauna_AT50-20_AT50-33_All_Combined_wide_20251219_1227.csv", row.names = FALSE, quote=FALSE)
 # confirmed no values shifted one column in the csv output
 # due to quote=FALSE and commas in column entries
 
@@ -187,9 +185,32 @@ test_amphipod <- test %>%
 # add quotes to just this column for csv output
 # Manually add double quotes to the 'name' column
 test_amphipod$verbatimIdentification <- paste0("\"", test_amphipod$verbatimIdentification, "\"")
-# write.csv(test_amphipod, file = "test_amphipod_at-sea_in-lab_20251216_1554.csv", row.names = FALSE, quote=FALSE)
-# next will need to subtract from Morphotype count now that it is refined into morphospecies count(s)
+# temporarily declare 'revised template' order here in code
+# because not in harmonization template yet
+temp_df <- dplyr::tribble(
+  ~verbatimIdentification, ~'revised template',
+  "c.f. Rhachotropis sp. S.I. Smith, 1883",                 5.001,                    
+  "Alicellidae gen. Lowry & De Broyer, 2008",                5.003,                     
+  "c.f. Macroarthrus sp. Hendrycks & Conlan, 2003",               5.004,                   
+  "c.f. Syrrhoites sp. G.O. Sars, 1893",                 5.005,                     
+  "Uristidae gen. Hurley, 1963",               5.006,                  
+  "Amphilochidea big eyes",                5.0071,                    
+  "Amphilochidea strong dorsal humps",               5.0072,                  
+  "Hyperiopsis sp. G.O. Sars, 1885",                 5.008
+)
+# Manually add double quotes to the 'verbatimIdentification' column
+temp_df$verbatimIdentification <- paste0("\"", temp_df$verbatimIdentification, "\"")
 
+test_amphipod <- full_join(temp_df, test_amphipod)
+# exclude AT50-20 not fully sorted
+test_amphipod <- test_amphipod %>%
+  select(-starts_with("AL5223"),
+         -starts_with("AL5222-SS-R02"),
+         -starts_with("AL5224-LM-R02"),
+         -starts_with("AL5224-LM-R03"))
+
+# write.csv(test_amphipod, file = "test_amphipod_at-sea_in-lab_20251219.csv", row.names = FALSE, quote=FALSE)
+# next will need to subtract from Morphotype count now that it is refined into morphospecies count(s)
 
 
 # plus plot grouped taxon counts and relative abundance

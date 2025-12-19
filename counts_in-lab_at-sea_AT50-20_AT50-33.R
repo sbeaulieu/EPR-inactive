@@ -237,6 +237,32 @@ for_col_bind <- test_amphipod %>%
 test_amphipod_subtracted <- bind_cols(for_col_bind, for_subtraction)
 # write.csv(test_amphipod_subtracted, file = "test_amphipod_subtracted_20251219.csv", row.names = FALSE, quote=FALSE)
 
+# remove the no longer needed row verbatimIdentification = "NA" from test_amphipod
+# this is now the final amphipod table that needs to be joined into All_Combined_wide
+amphipods_for_join <- test_amphipod_subtracted %>%
+  filter(verbatimIdentification != '"NA"')
+total_amphipods_for_join <- amphipods_for_join %>%
+  select(starts_with("AL")) %>%
+  sum(na.rm = TRUE)
+
+# remove the original row for Morphotype = "amphipod unk" from All_Combined_wide
+# then join the final amphipod table
+All_Combined_wide_clean_without_amphipods <- All_Combined_wide_clean %>%
+  filter(Morphotype != "amphipod unk")
+total_All_Combined_wide_clean_without_amphipods <- All_Combined_wide_clean_without_amphipods %>%
+  select(starts_with("AL")) %>%
+  sum(na.rm = TRUE)
+# confirm missing exactly as many amphipods as will be joined
+total_All_Combined_wide_clean - total_All_Combined_wide_clean_without_amphipods
+
+All_Combined_wide_with_amphipods <- full_join(All_Combined_wide_clean_without_amphipods, amphipods_for_join)
+# confirm total All_Combined_wide_with_amphipods
+total_All_Combined_wide_clean_with_amphipods <- All_Combined_wide_with_amphipods %>%
+  select(starts_with("AL")) %>%
+  sum(na.rm = TRUE)
+# write.csv(All_Combined_wide_with_amphipods, file = "All_Combined_wide_with_amphipods_20251219.csv", row.names = FALSE, quote=FALSE)
+
+
 
 # plus plot grouped taxon counts and relative abundance
 # plus NMDS

@@ -4,7 +4,7 @@
 # plus NMDS
 # cruises AT50-20 and AT50-33
 # Stace Beaulieu, Emmanuelle Bogomolni
-# 2025-12-16
+# 2025-12-19
 
 #Load required packages
 
@@ -47,7 +47,7 @@ InLab_AB_numeric <- input_InLab_AB %>%
 )
 
 #Loading in the AT50-20 datasheets
-Snails_Harris<-readxl::read_xlsx("AT50-20_Macrofauna_Counts_Harris_HARMONIZED_20250724.xlsx", skip = 9)
+Snails_Harris<-readxl::read_xlsx("AT50-20_Macrofauna_Counts_Harris_HARMONIZED_20251219.xlsx", skip = 9)
 Snails_Best<-readxl::read_xlsx("AT50-20_Macrofauna_Counts_Best_20251208.xlsx", skip = 9)
 
 # also read in sampling events from rock log AT50-33
@@ -69,6 +69,9 @@ input_joined_EB_WH <- dplyr::full_join(input_joined_EB, input_InLab_WH, c("Morph
 # Join InLab AB on category AB (= Morphotype DSR) column
 input_joined_EB_WH_AB <- dplyr::full_join(input_joined_EB_WH, InLab_AB_numeric, c("category_in_Ayinde_Best_template" = "Morphotype DSR"))
 # 2025-12-16 new category cumacean is last row
+# temporarily declare Morphotype and revised template order here in code
+# because not in harmonization template yet
+
 
 #AT50-20 Join counts
 #Combining Snails_Best and Snails_Harris using the join function
@@ -79,7 +82,7 @@ Snails_AT5020_numeric <- Snails_AT5020 %>%
   mutate(
     across(starts_with('AL'),
            function(x) case_when(
-             x == "Present" ~ 1,
+             x == "Present" ~ 1, # note case sensitive
              x == "Absent" ~ 0,
              TRUE ~ as.numeric(x)
            )
@@ -89,7 +92,47 @@ Snails_AT5020_numeric <- Snails_AT5020 %>%
 # join AT50-20 with AT50-33 counts
 All_Combined_wide<-full_join(input_joined_EB_WH_AB, Snails_AT5020_numeric, by = c("category_in_Ayinde_Best_template" ="...2" ))
 # note this has a bunch of extra columns
-# write.csv(All_Combined_wide, file = "macrofauna_AT50-20_AT50-33_All_Combined_wide_20251216.csv", row.names = FALSE, quote=FALSE)
+All_Combined_wide_clean <- All_Combined_wide %>%
+  select(-starts_with("row number"),
+         -starts_with("order"),
+         -starts_with("category"), # couple commas in column category_in_Ayinde_Best_template
+         -starts_with("..."))
+# at this point not entirely clean still has character columns separating joins
+# just need to declare the "revised template" column as character
+# to be able to sum the whole table
+All_Combined_wide_clean$`revised template` <- as.character(All_Combined_wide_clean$`revised template`)
+
+total_All_Combined_wide_clean <- All_Combined_wide_clean %>%
+  select(where(is.numeric)) %>%
+  sum(na.rm = TRUE)
+#  summarise(across(where(is.numeric), ~ sum(.x, na.rm = TRUE))) # sum per column
+
+# QC expected total counts
+total_input_AtSea <- input_AtSea %>%
+  select(starts_with("AL")) %>%
+  sum(na.rm = TRUE)
+total_input_InLab_EB <- input_InLab_EB %>%
+  select(starts_with("AL")) %>%
+  sum(na.rm = TRUE)
+total_input_InLab_WH <- input_InLab_WH %>%
+  select(starts_with("AL")) %>%
+  sum(na.rm = TRUE)
+total_InLab_AB_numeric <- InLab_AB_numeric %>% # manually checked against input
+  select(starts_with("AL")) %>%
+  sum(na.rm = TRUE)
+total_Snails_AT5020_numeric <- Snails_AT5020_numeric %>% # manually checked against input 
+  select(starts_with("AL")) %>%
+  sum(na.rm = TRUE)
+expected <- total_input_AtSea +
+  total_input_InLab_EB +
+  total_input_InLab_WH +
+  total_InLab_AB_numeric +
+  total_Snails_AT5020_numeric
+
+
+# write.csv(All_Combined_wide_clean, file = "macrofauna_AT50-20_AT50-33_All_Combined_wide_20251219.csv", row.names = FALSE, quote=FALSE)
+# confirmed no values shifted one column in the csv output
+# due to quote=FALSE and commas in column entries
 
 # plus taxonomist refined morphospecies
 

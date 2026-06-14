@@ -11,7 +11,7 @@
 # import libraries
 library(readxl)
 library(dplyr)
-library(readr)
+library(readr) # useful to output csv if some entries have commas
 
 # set path
 setwd("C:/Users/sbeaulieu/Downloads")

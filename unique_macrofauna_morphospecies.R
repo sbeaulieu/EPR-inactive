@@ -23,7 +23,7 @@ library(tidyr) # associatedMedia has pipe separator
 setwd("C:/Users/sbeaulieu/Downloads")
 
 # load data
-full_data <- read_excel("TEMPLATE_unique_macrofauna_morphospecies_2026-07-05.xlsx", skip = 3)
+full_data <- read_excel("TEMPLATE_unique_macrofauna_morphospecies_2026-07-10.xlsx", skip = 3)
 
 # keep only the unique morphospecies
 uniq_morph <- dplyr::filter(full_data, consider_for_checklist_unique_morphospecies == "y")
@@ -60,12 +60,11 @@ for_bcodmo <- dplyr::select(full_data, "Table of Contents",
 # filter order_unique_morphospecies is not NA
 
 # to confirm that filenames in BCO-DMO associatedMedia match the files in D drive
-Ddrive <- readr::read_table("Ddrive_filenames_photos.txt") # note parsing error if space in filename
+Ddrive <- readr::read_table("Ddrive_filenames_photos_2026-07-10.txt") # note parsing error if space in filename
 Media <- for_bcodmo["associatedMedia"]
 Media_long <- separate_longer_delim(Media, associatedMedia, delim = "|")
-# Media_long has a few NAs so check associatedMedia entries for blank spaces
 # if filenames match perfectly then full_join should have same number rows as Media_long
 # use keep = TRUE to determine if D drive missing any files
 confirm_filenames <- full_join(Media_long, Ddrive, c("associatedMedia" = "Ddrive_filenames"), keep = TRUE)
-write.csv(confirm_filenames, "associatedMedia_vs_Ddrive_filenames_2026-07-10.csv")
+write.csv(confirm_filenames, "associatedMedia_vs_Ddrive_filenames_2026-07-10_1130.csv")
 

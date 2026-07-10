@@ -2,7 +2,7 @@
 # and to create data table for BCO-DMO
 # and to check filenames for photos to zip for BCO-DMO
 # Stace Beaulieu
-# 2026-07-09
+# 2026-07-10
 
 # inputs: 
 # download "TEMPLATE_unique_macrofauna_morphospecies_WORKING_COPY" from Google folder as xlsx
@@ -65,6 +65,7 @@ Media <- for_bcodmo["associatedMedia"]
 Media_long <- separate_longer_delim(Media, associatedMedia, delim = "|")
 # Media_long has a few NAs so check associatedMedia entries for blank spaces
 # if filenames match perfectly then full_join should have same number rows as Media_long
-confirm_filenames <- full_join(Media_long, Ddrive, c("associatedMedia" = "Ddrive_filenames"))
-write.csv(confirm_filenames, "associatedMedia_vs_Ddrive_filenames_2026-07-09.csv")
+# use keep = TRUE to determine if D drive missing any files
+confirm_filenames <- full_join(Media_long, Ddrive, c("associatedMedia" = "Ddrive_filenames"), keep = TRUE)
+write.csv(confirm_filenames, "associatedMedia_vs_Ddrive_filenames_2026-07-10.csv")
 

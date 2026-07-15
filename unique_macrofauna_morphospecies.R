@@ -2,7 +2,7 @@
 # and to create data table for BCO-DMO
 # and to check filenames for photos to zip for BCO-DMO
 # Stace Beaulieu
-# 2026-07-10
+# 2026-07-15
 
 # inputs: 
 # download "TEMPLATE_unique_macrofauna_morphospecies_WORKING_COPY" from Google folder as xlsx
@@ -23,7 +23,7 @@ library(tidyr) # associatedMedia has pipe separator
 setwd("C:/Users/sbeaulieu/Downloads")
 
 # load data
-full_data <- read_excel("TEMPLATE_unique_macrofauna_morphospecies_2026-07-10.xlsx", skip = 3)
+full_data <- read_excel("TEMPLATE_unique_macrofauna_morphospecies_2026-07-15.xlsx", skip = 3)
 
 # keep only the unique morphospecies
 uniq_morph <- dplyr::filter(full_data, consider_for_checklist_unique_morphospecies == "y")
@@ -54,10 +54,12 @@ for_bcodmo <- dplyr::select(full_data, "Table of Contents",
                             genus,
                             species)
 
+# need to strip the bottom 4 rows ("eggcases", "eukaryote unk", "coil?" and counter)
+for_bcodmo <- dplyr::filter(for_bcodmo, row_number() <= n() - 4)
+
 # save output data table for BCO-DMO
-#readr::write_csv(for_bcodmo, "BCO-DMO_macrofauna_morphospecies_2026-07-05.csv", na = "")
-# need to strip the bottom row
-# filter order_unique_morphospecies is not NA
+#readr::write_csv(for_bcodmo, "BCO-DMO_macrofauna_morphospecies_2026-07-15.csv", na = "")
+
 
 # to confirm that filenames in BCO-DMO associatedMedia match the files in D drive
 Ddrive <- readr::read_table("Ddrive_filenames_photos_2026-07-10.txt") # note parsing error if space in filename

@@ -2,7 +2,7 @@
 # and to create data table for BCO-DMO
 # and to check filenames for photos to zip for BCO-DMO
 # Stace Beaulieu
-# 2026-07-15
+# 2026-07-17
 
 # inputs: 
 # download "TEMPLATE_unique_macrofauna_morphospecies_WORKING_COPY" from Google folder as xlsx
@@ -23,7 +23,7 @@ library(tidyr) # associatedMedia has pipe separator
 setwd("C:/Users/sbeaulieu/Downloads")
 
 # load data
-full_data <- read_excel("TEMPLATE_unique_macrofauna_morphospecies_2026-07-15.xlsx", skip = 3)
+full_data <- read_excel("TEMPLATE_unique_macrofauna_morphospecies_2026-07-17.xlsx", skip = 3)
 
 # keep only the unique morphospecies
 uniq_morph <- dplyr::filter(full_data, consider_for_checklist_unique_morphospecies == "y")
@@ -52,13 +52,18 @@ for_bcodmo <- dplyr::select(full_data, "Table of Contents",
                             order,
                             family,
                             genus,
-                            species)
+                            species,
+                            category_in_Ayinde_Best_template)
+
+# rename category_in_Ayinde_Best_template
+# this is superset containing morphotypes in 2025 DSRI paper
+for_bcodmo <- dplyr::rename(for_bcodmo, morphotypes_2025 = category_in_Ayinde_Best_template)
 
 # need to strip the bottom 4 rows ("eggcases", "eukaryote unk", "coil?" and counter)
 for_bcodmo <- dplyr::filter(for_bcodmo, row_number() <= n() - 4)
 
 # save output data table for BCO-DMO
-#readr::write_csv(for_bcodmo, "BCO-DMO_macrofauna_morphospecies_2026-07-15.csv", na = "")
+#readr::write_csv(for_bcodmo, "BCO-DMO_macrofauna_morphospecies_2026-07-17.csv", na = "")
 
 
 # to confirm that filenames in BCO-DMO associatedMedia match the files in D drive
@@ -68,5 +73,5 @@ Media_long <- separate_longer_delim(Media, associatedMedia, delim = "|")
 # if filenames match perfectly then full_join should have same number rows as Media_long
 # use keep = TRUE to determine if D drive missing any files
 confirm_filenames <- full_join(Media_long, Ddrive, c("associatedMedia" = "Ddrive_filenames"), keep = TRUE)
-write.csv(confirm_filenames, "associatedMedia_vs_Ddrive_filenames_2026-07-10_1130.csv")
+#write.csv(confirm_filenames, "associatedMedia_vs_Ddrive_filenames_2026-07-10_1130.csv")
 
